@@ -8,7 +8,6 @@ import cors from "cors";
 
 export const app = express();
 
-
 config();
 
 app.use(express.json());
