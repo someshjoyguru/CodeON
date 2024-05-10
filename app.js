@@ -14,7 +14,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    // origin: ['http://localhost:5173','https://achieveit-mocha.vercel.app', 'https://achieve-it-omega.vercel.app'],
+    origin: ['https://nitjsr-cp-portal.vercel.app'],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
