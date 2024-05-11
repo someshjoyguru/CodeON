@@ -19,19 +19,16 @@ const schema = new mongoose.Schema({
   phone: {
     type: String,
     length: 10,
-    unique: [true, "Phone number already exists"],
   },
   registrationNo: {
     type: String,
     length: 11,
-    unique: [true, "Registration number already exists"],
   },
   shirtSize: {
     type: String,
   },
   codeforces: {
     type: String,
-    unique: [true, "Codeforces handle already exists"],
   },
   codeforcesRating: {
     type: String,
