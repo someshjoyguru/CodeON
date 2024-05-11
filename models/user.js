@@ -21,6 +21,13 @@ const schema = new mongoose.Schema({
     length: 10,
     unique: [true, "Phone number already exists"],
     sparse: true,
+    validate: {
+      validator: function(v) {
+        if (!v || v.trim() === '') return true; // Allow empty or null values
+        return /\d{10}/.test(v); // Validate phone number format if not empty
+      },
+      message: "Invalid phone number format"
+    }
   },
   registrationNo: {
     type: String,
