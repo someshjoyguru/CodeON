@@ -10,7 +10,14 @@ const postSchema = new mongoose.Schema({
     description: {
         type: String,
         required: true,
-        trim: true
+        trim: false,
+        preserveLineBreaks: true
+    },
+    summary: {
+        type: String,
+        default: "AI generated summary",
+        trim: false,
+        preserveLineBreaks: true
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,

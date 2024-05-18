@@ -101,3 +101,18 @@ export const updateProfile = async (req, res, next) => {
     next(error);
   }
 }
+
+export const giveUserDetails = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+    
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
