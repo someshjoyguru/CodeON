@@ -22,7 +22,8 @@ const postSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        default: '664948828e2e3a97f901afb7'
+        // required: true
     },
     tags: [{
         type: String,
