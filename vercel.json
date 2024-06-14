@@ -11,7 +11,7 @@
         "src": "/api/v1/(.*)",
         "dest": "server.js",
         "headers": {
-          "Access-Control-Allow-Origin": "https://foodie-ten-chi.vercel.app",
+          "Access-Control-Allow-Origin": "https://nitjsr-cp-portal.vercel.app",
           "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
           "Access-Control-Allow-Headers": "X-Requested-With, Content-Type, Accept, Authorization"
         }
