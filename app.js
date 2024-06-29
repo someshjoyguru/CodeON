@@ -6,12 +6,23 @@ import { config } from "dotenv";
 import cookieParser from "cookie-parser";
 import { errorMiddleware } from "./middlewares/error.js";
 import cors from "cors";
+import { v2 as cloudinary } from 'cloudinary';
 
 export const app = express();
 
 config({
   path: "./data/config.env",
 });
+
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+console.log("Cloudinary configured");
+console.log(process.env.CLOUDINARY_CLOUD_NAME);
 
 app.use(express.json());
 app.use(cookieParser());
@@ -33,3 +44,5 @@ app.get("/", (req, res) => {
 });
 
 app.use(errorMiddleware);
+
+export {cloudinary};

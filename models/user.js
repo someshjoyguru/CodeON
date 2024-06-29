@@ -61,6 +61,14 @@ const schema = new mongoose.Schema({
     type: String,
     default: "0",
   },
+  image: {
+    public_id: {
+      type: String,
+    },
+    url: {
+      type: String,
+    },
+  },
   streak: {
     type: Number,
     default: 0,

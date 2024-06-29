@@ -2,6 +2,7 @@ import { User } from "../models/user.js";
 import bcrypt from "bcrypt";
 import { sendCookie } from "../utils/features.js";
 import ErrorHandler from "../middlewares/error.js";
+import { cloudinary } from "../app.js";
 
 export const login = async (req, res, next) => {
   try {
@@ -77,13 +78,25 @@ export const logout = (req, res) => {
 };
 
 export const updateProfile = async (req, res, next) => {
+  const {phone, registrationNo, shirtSize, codeforces, codeforcesRating, image } =
+  req.body;
+  
   try {
-    const {phone, registrationNo, shirtSize, codeforces, codeforcesRating } =
-      req.body;
+    let result;
+    if (image){
+      result = await cloudinary.uploader.upload(image, {
+        folder: "profile",
+    });
+    }
 
     const user = await User.findById(req.user._id);
 
     if (!user) return next(new ErrorHandler("User not found", 404));
+
+    if (result) {
+      user.image.public_id = result.public_id;
+      user.image.url = result.secure_url;
+    }
 
     user.phone = phone;
     user.registrationNo = registrationNo;
@@ -116,3 +129,4 @@ export const giveUserDetails = async (req, res, next) => {
     next(error);
   }
 }
+
