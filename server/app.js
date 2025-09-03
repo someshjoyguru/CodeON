@@ -28,7 +28,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ['http://localhost:5173','https://codeon-server.someshghosh.me'],
+    origin: ['http://localhost:5173','https://codeon.someshghosh.me'],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
