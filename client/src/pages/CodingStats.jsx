@@ -1,13 +1,11 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
-import { Box, CircularProgress } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
 import ProtectedRoute from '../utils/ProtectedRoute';
 import { Context } from '../main';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Grid, Paper, Typography } from '@mui/material';
-import { useMediaQuery, useTheme } from '@mui/material';
+import { Button } from '../components/ui/button';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../components/ui/table';
 
 const CodingStats = () => {
   const { user } = useContext(Context);
@@ -16,52 +14,42 @@ const CodingStats = () => {
   const [problemStats, setProblemStats] = useState([]);
   const [isLoading, setIsLoading] = useState(true); 
   const [error, setError] = useState(null);
+  const fetchedRef = useRef(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (user && user.codeforces) {
-        try {
-          const [statsResponse, contestHistoryResponse, problemStatsResponse] = await Promise.all([
-            axios.get(`https://codeforces.com/api/user.info?handles=${user.codeforces}`),
-            axios.get(`https://codeforces.com/api/user.rating?handle=${user.codeforces}`),
-            axios.get(`https://codeforces.com/api/user.status?handle=${user.codeforces}`)
-          ]);
+  const fetchData = async (force=false) => {
+    if (!user || !user.codeforces){
+      setError('Enter your Codeforces handle from the dashboard');
+      setIsLoading(false); return; }
+    if (fetchedRef.current && !force) return; // prevent duplicate fetch
+    fetchedRef.current = true;
+    setIsLoading(true);
+    try {
+      const [statsResponse, contestHistoryResponse, problemStatsResponse] = await Promise.all([
+        axios.get(`https://codeforces.com/api/user.info?handles=${user.codeforces}`),
+        axios.get(`https://codeforces.com/api/user.rating?handle=${user.codeforces}`),
+        axios.get(`https://codeforces.com/api/user.status?handle=${user.codeforces}`)
+      ]);
+      setStats(statsResponse.data.result[0]);
+      setContestHistory(contestHistoryResponse.data.result);
+      setProblemStats(problemStatsResponse.data.result);
+      setError(null);
+    } catch (e) {
+      console.error(e);
+      setError('Failed to fetch Codeforces data');
+      toast.error('Failed to fetch Codeforces data');
+    } finally { setIsLoading(false); }
+  };
 
-          setStats(statsResponse.data.result[0]);
-          setContestHistory(contestHistoryResponse.data.result);
-          setProblemStats(problemStatsResponse.data.result);
-          setIsLoading(false); 
-        } catch (error) {
-          setError('Failed to fetch Codeforces data');
-          setIsLoading(false); 
-          toast.error('Failed to fetch Codeforces data');
-        }
-      } else {
-        setError('Enter your Codeforces handle from the dashboard');
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user]); 
+  useEffect(() => { fetchData(); }, [user]);
   
-  const columns = [
-    { field: 'contestId', headerName: 'Contest ID', width: 150 },
-    { field: 'contestName', headerName: 'Contest Name', width: 300 },
-    { field: 'rank', headerName: 'Rank', width: 150 },
-    { field: 'ratingUpdateTimeSeconds', headerName: 'Time', width: 200 },
-    { field: 'oldRating', headerName: 'Old Rating', width: 150 },
-    { field: 'newRating', headerName: 'New Rating', width: 150 },
-  ];
-
-  const rows = contestHistory.map((contest, index) => ({
-    id: index,
-    contestId: contest.contestId,
-    contestName: contest.contestName,
-    rank: contest.rank,
-    ratingUpdateTimeSeconds: new Date(contest.ratingUpdateTimeSeconds * 1000).toLocaleString(),
-    oldRating: contest.oldRating,
-    newRating: contest.newRating,
+  const rows = contestHistory.map((c, i) => ({
+    id: i,
+    contestId: c.contestId,
+    contestName: c.contestName,
+    rank: c.rank,
+    time: new Date(c.ratingUpdateTimeSeconds * 1000).toLocaleString(),
+    oldRating: c.oldRating,
+    newRating: c.newRating,
   }));
 
   const problemTypes = problemStats.reduce((acc, problem) => {
@@ -85,96 +73,66 @@ const CodingStats = () => {
   const COLORS = [
     '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF1943', '#19FF4A', '#FFD319', '#19D1FF', '#8E19FF'
   ];
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   return (
     <ProtectedRoute>
-      <Box
-        sx={{
-          padding: '30px',
-          margin: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          ...(isMobile ? {} : { width: '50%' }),
-        }}
-      >
+      <div className="mx-auto max-w-5xl p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight">Coding Statistics</h1>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={()=>fetchData(true)} disabled={isLoading}>Refresh</Button>
+          </div>
+        </div>
         {isLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-            <CircularProgress />
-          </Box>
+          <div className="flex h-64 items-center justify-center"><div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>
         ) : error ? (
-          <Box>{error}</Box>
+          <div className="text-sm text-destructive font-medium">{error}</div>
         ) : (
           stats && (
-            <Box>
-              <Paper elevation={3} sx={{ padding: '20px', marginTop: '20px' }}>
-                <Typography
-                  variant="h4"
-                  component="h2"
-                  align="center"
-                  color="primary"
-                  gutterBottom
-                >
-                  Statistics for: {stats.firstName ? (stats.firstName + ' ' + (stats.lastName ? stats.lastName : null)) : stats.handle}
-                </Typography>
-                <Box>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="h6" component="p">
-                        <b>Handle:</b>
-                      </Typography>
-                      <Typography variant="body1" component="p">
-                        {stats.handle}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="h6" component="p">
-                        <b>Country:</b>
-                      </Typography>
-                      <Typography variant="body1" component="p">
-                        {stats.country}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="h6" component="p">
-                        <b>Current Rating:</b>
-                      </Typography>
-                      <Typography variant="body1" component="p">
-                        {stats.rating}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="h6" component="p">
-                        <b>Max Rating:</b>
-                      </Typography>
-                      <Typography variant="body1" component="p">
-                        {stats.maxRating} <span>{stats.maxRank}</span>
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Typography variant="h6" component="p">
-                        <b>Current Rank:</b>
-                      </Typography>
-                      <Typography variant="body1" component="p">
-                        {stats.rank}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </Box>
-              </Paper>
+            <div className="space-y-8">
+              <div className="rounded-lg border p-6 bg-card shadow-sm">
+                <h2 className="text-xl font-semibold mb-4 text-center">Statistics for: {stats.firstName ? `${stats.firstName} ${stats.lastName || ''}` : stats.handle}</h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div><p className="text-xs uppercase text-muted-foreground">Handle</p><p className="font-medium">{stats.handle}</p></div>
+                  <div><p className="text-xs uppercase text-muted-foreground">Country</p><p className="font-medium">{stats.country || '-'}</p></div>
+                  <div><p className="text-xs uppercase text-muted-foreground">Current Rating</p><p className="font-medium">{stats.rating || '-'}</p></div>
+                  <div><p className="text-xs uppercase text-muted-foreground">Max Rating</p><p className="font-medium">{stats.maxRating} <span className="text-muted-foreground">{stats.maxRank}</span></p></div>
+                  <div className="sm:col-span-2"><p className="text-xs uppercase text-muted-foreground">Current Rank</p><p className="font-medium">{stats.rank}</p></div>
+                </div>
+              </div>
               {contestHistory.length > 0 && (
-                <Box mt={4}>
-                  <h3>Contest History</h3>
-                  <div style={{ height: 400, width: '100%' }}>
-                    <DataGrid rows={rows} columns={columns} pageSize={5} />
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Contest History</h3>
+                  <div className="rounded-lg border overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Contest</TableHead>
+                          <TableHead>Rank</TableHead>
+                          <TableHead>Old</TableHead>
+                          <TableHead>New</TableHead>
+                          <TableHead>Time</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {rows.slice(0,50).map(r => (
+                          <TableRow key={r.id}>
+                            <TableCell className="font-medium">{r.contestName}</TableCell>
+                            <TableCell>{r.rank}</TableCell>
+                            <TableCell>{r.oldRating}</TableCell>
+                            <TableCell>{r.newRating}</TableCell>
+                            <TableCell className="text-muted-foreground whitespace-nowrap">{r.time}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
-                </Box>
+                </div>
               )}
               {problemTypesData.length > 0 && (
-                <Box mt={4}>
-                  <h3>Types of Problems Solved</h3>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Types of Problems Solved</h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
@@ -194,12 +152,12 @@ const CodingStats = () => {
                       <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
-                </Box>
+                </div>
               )}
 
               {ratingDistributionData.length > 0 && (
-                <Box mt={4}>
-                  <h3>Rating-wise Problems Solved</h3>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Rating-wise Problems Solved</h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={ratingDistributionData}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -210,12 +168,12 @@ const CodingStats = () => {
                       <Bar dataKey="count" fill="#82ca9d" />
                     </BarChart>
                   </ResponsiveContainer>
-                </Box>
+                </div>
               )}
-            </Box>
+            </div>
           )
         )}
-      </Box>
+      </div>
     </ProtectedRoute>
   );
 };

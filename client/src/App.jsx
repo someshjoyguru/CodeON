@@ -4,7 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Leaderboard from "./pages/Leaderboard";
 import { Toaster } from "react-hot-toast";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useRef } from "react";
 import axios from "axios";
 import { Context, server } from "./main";
 import Header from "./components/Header";
@@ -16,22 +16,14 @@ import CodingStats from "./pages/CodingStats";
 function App() {
   const { setUser, setIsAuthenticated} = useContext(Context);
 
+  const fetchedRef = useRef(false);
   useEffect(() => {
-    axios
-      .get(`${server}/users/me`, {
-        withCredentials: true,
-      })
-      .then((res) => {
-        setUser(res.data.user);
-        setIsAuthenticated(true);
-        
-      })
-      .catch((error) => {
-        setUser({});
-        setIsAuthenticated(false);
-        
-      });
-  }, []);
+    if (fetchedRef.current) return; // guard
+    fetchedRef.current = true;
+    axios.get(`${server}/users/me`, { withCredentials: true })
+      .then(res => { setUser(res.data.user); setIsAuthenticated(true); })
+      .catch(() => { setUser({}); setIsAuthenticated(false); });
+  }, [setUser, setIsAuthenticated]);
 
   return (
     <Router>

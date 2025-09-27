@@ -27,8 +27,5 @@ const AppWrapper = () => {
   );
 };
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <AppWrapper />
-  </React.StrictMode>
-);
+// Removed React.StrictMode to avoid double-invocation of effects (which was causing duplicate API calls in dev)
+ReactDOM.createRoot(document.getElementById("root")).render(<AppWrapper />);
