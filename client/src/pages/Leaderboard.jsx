@@ -16,11 +16,13 @@ const sorters = {
 
 const Leaderboard = () => {
   const [leader, setLeader] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [sortKey, setSortKey] = useState('rank');
   const [asc, setAsc] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     axios.get(`${server}/leaderboard`, {
       withCredentials: true,
     })
@@ -37,7 +39,8 @@ const Leaderboard = () => {
       .catch((e) => {
         console.error(e);
         toast.error(e.response.data.message);
-       });
+       })
+      .finally(()=>setLoading(false));
   }, []);
 
   const filtered = leader.filter(l =>
@@ -61,33 +64,42 @@ const Leaderboard = () => {
               <Button variant="outline" onClick={()=>{setQuery('')}}>Reset</Button>
             </div>
           </div>
-          <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead onClick={()=>toggleSort('rank')} className="cursor-pointer select-none">Rank {sortKey==='rank' && (asc?'▲':'▼')}</TableHead>
-                  <TableHead onClick={()=>toggleSort('name')} className="cursor-pointer select-none">Name {sortKey==='name' && (asc?'▲':'▼')}</TableHead>
-                  <TableHead>Codeforces Id</TableHead>
-                  <TableHead onClick={()=>toggleSort('codeforcesRating')} className="cursor-pointer select-none">Rating {sortKey==='codeforcesRating' && (asc?'▲':'▼')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sorted.map(row => (
-                  <TableRow key={row._id} className="hover:bg-accent/40">
-                    <TableCell className="font-medium">{row.rank}</TableCell>
-                    <TableCell>{row.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{row.codeforces || '-'}</TableCell>
-                    <TableCell>{row.codeforcesRating}</TableCell>
-                  </TableRow>
-                ))}
-                {sorted.length === 0 && (
+          <div className="rounded-lg border bg-card shadow-sm overflow-hidden min-h-[300px] relative">
+            {loading ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <p className="text-xs text-muted-foreground">Fetching leaderboard...</p>
+                </div>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">No results.</TableCell>
+                    <TableHead onClick={()=>toggleSort('rank')} className="cursor-pointer select-none">Rank {sortKey==='rank' && (asc?'▲':'▼')}</TableHead>
+                    <TableHead onClick={()=>toggleSort('name')} className="cursor-pointer select-none">Name {sortKey==='name' && (asc?'▲':'▼')}</TableHead>
+                    <TableHead>Codeforces Id</TableHead>
+                    <TableHead onClick={()=>toggleSort('codeforcesRating')} className="cursor-pointer select-none">Rating {sortKey==='codeforcesRating' && (asc?'▲':'▼')}</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-              <TableCaption className="text-xs">Click headers to sort. {leader.length} competitors total.</TableCaption>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {sorted.map(row => (
+                    <TableRow key={row._id} className="hover:bg-accent/40">
+                      <TableCell className="font-medium">{row.rank}</TableCell>
+                      <TableCell>{row.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{row.codeforces || '-'}</TableCell>
+                      <TableCell>{row.codeforcesRating}</TableCell>
+                    </TableRow>
+                  ))}
+                  {sorted.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-6">No results.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+                <TableCaption className="text-xs">Click headers to sort. {leader.length} competitors total.</TableCaption>
+              </Table>
+            )}
           </div>
         </div>
       </div>

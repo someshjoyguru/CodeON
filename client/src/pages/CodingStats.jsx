@@ -5,6 +5,7 @@ import ProtectedRoute from '../utils/ProtectedRoute';
 import { Context } from '../main';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Button } from '../components/ui/button';
+import Loader from '../utils/Loader.jsx';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '../components/ui/table';
 
 const CodingStats = () => {
@@ -85,7 +86,9 @@ const CodingStats = () => {
           </div>
         </div>
         {isLoading ? (
-          <div className="flex h-64 items-center justify-center"><div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div>
+          <div className="flex h-64 items-center justify-center">
+            <Loader label="Fetching stats..." />
+          </div>
         ) : error ? (
           <div className="text-sm text-destructive font-medium">{error}</div>
         ) : (

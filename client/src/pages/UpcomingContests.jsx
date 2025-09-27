@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Button } from '../components/ui/button';
+import Loader from '../utils/Loader.jsx';
 import useScreenSize from '../utils/useScreenSize.jsx';
 
 const UpcomingContests = () => {
@@ -34,7 +35,7 @@ const UpcomingContests = () => {
           <Button size="sm" variant="outline" onClick={()=>window.location.href='https://codeforces.com/contests?complete=true'}>All Contests</Button>
         </div>
         {isLoading ? (
-          <div className="flex justify-center items-center h-60"><div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" /></div>
+          <div className="flex justify-center items-center h-60"><Loader label="Fetching contests..." /></div>
         ) : (
           <div className="grid gap-4">
             {upcomingContests.map(contest => (

@@ -144,12 +144,20 @@ const Community = () => {
           </div>
         )}
 
-        <div className="grid gap-4">
-          {!viewPost && posts.length === 0 && (
+        <div className="grid gap-4 relative min-h-[200px]">
+          {loading && !viewPost && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <p className="text-xs text-muted-foreground">Loading posts...</p>
+              </div>
+            </div>
+          )}
+          {!loading && !viewPost && posts.length === 0 && (
             <div className="text-sm text-muted-foreground border rounded-lg p-8 text-center">No posts yet. Be the first to share!</div>
           )}
-          {!viewPost && posts.length > 0 && (
-            <div className="grid gap-4">
+          {!loading && !viewPost && posts.length > 0 && (
+            <div className="grid gap-4 opacity-100 transition">
               {posts.map(post => (
                 <div key={post._id} className="rounded-lg border bg-card p-5 shadow-sm hover:shadow transition flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -165,7 +173,7 @@ const Community = () => {
             </div>
           )}
 
-          {viewPost && posts.map(post => post._id === viewPost ? (
+          {viewPost && !loading && posts.map(post => post._id === viewPost ? (
             <div key={post._id} className="rounded-lg border bg-card p-6 shadow-sm">
               <div className="mb-4 flex justify-between items-start gap-4 flex-wrap">
                 <Button size="sm" variant="outline" onClick={resetViewPost}>Back</Button>

@@ -12,7 +12,9 @@ import ProtectedRoute from "../utils/ProtectedRoute";
 
 const Home = () => {
   const [refresh, setRefresh] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [quote, setQuote] = useState([]);
+  const [imageError, setImageError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedEmail, setEditedEmail] = useState("");
@@ -28,9 +30,9 @@ const Home = () => {
   const isMobile = width < 640;
 
   useEffect(() => {
-    axios.get(`${server}/users/me`, {
-      withCredentials: true,
-    })
+    setLoading(true);
+    axios
+      .get(`${server}/users/me`, { withCredentials: true })
       .then((res) => {
         setEditedName(res.data.user.name);
         setEditedEmail(res.data.user.email);
@@ -43,13 +45,14 @@ const Home = () => {
       })
       .catch((e) => {
         console.error(e);
-        toast.error(e.response.data.message);
-      });
+        toast.error(e.response?.data?.message || 'Failed to load user');
+      })
+      .finally(() => setLoading(false));
 
-      const index = Math.floor(Math.random() * quotes.length);
-      let author = quotes[index].author;
-      author = author ? author.split(", ")[0] : "Unknown";
-      setQuote([quotes[index].text, author]);
+    const index = Math.floor(Math.random() * quotes.length);
+    let author = quotes[index].author;
+    author = author ? author.split(", ")[0] : "Unknown";
+    setQuote([quotes[index].text, author]);
   }, [refresh]);
 
 
@@ -59,13 +62,14 @@ const Home = () => {
   const handleImage = (e) => {
     const file = e.target.files[0];
     if (file.size > 100000) {
-      setError('File size should be less than 100kB');
+      setImageError('File size should be less than 100kB');
       return;
     }
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onloadend = () => {
       setImage(reader.result);
+      setImageError("");
     }
   }
 
@@ -137,6 +141,16 @@ const Home = () => {
   return (
     <ProtectedRoute>
       <div className={`pb-12 mt-4 space-y-5 ${containerClasses}`}>
+        {loading && (
+          <div className="flex items-center justify-center py-24">
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              <p className="text-xs text-muted-foreground">Loading dashboard...</p>
+            </div>
+          </div>
+        )}
+        {!loading && (
+        <>
         {/* Top hero + quick access */}
         <div className="grid gap-4 md:grid-cols-5 items-stretch">
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/90 via-primary to-primary/70 text-primary-foreground p-5 flex flex-col justify-center md:col-span-3 shadow-sm">
@@ -179,6 +193,7 @@ const Home = () => {
               <div className="grid gap-2 pt-1">
                 {image && <img src={image} alt="Preview" className="h-32 w-32 object-cover rounded-md border" />}
                 <input type="file" onChange={handleImage} className="text-xs" />
+                {imageError && <p className="text-[10px] text-red-500">{imageError}</p>}
               </div>
               <div className="flex flex-col sm:flex-row gap-2 pt-1">
                 <Button variant="outline" className="w-full sm:w-1/2" type="button" onClick={()=>setIsEditing(false)}>Cancel</Button>
@@ -205,6 +220,8 @@ const Home = () => {
           )}
         </div>
         {/* Secondary navigation removed (now in Quick Access) */}
+        </>
+        )}
       </div>
     </ProtectedRoute>
   );
