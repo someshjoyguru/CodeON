@@ -1,23 +1,14 @@
-import axios from "axios";
-import React, { useContext, useState } from "react";
-import { toast } from "react-hot-toast";
-import { Navigate, useNavigate } from "react-router-dom";
-import { Context, server } from "../main";
-
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
-import { useTheme } from "@mui/material/styles";
-import { useMediaQuery } from "@mui/material";
+import axios from 'axios';
+import React, { useContext } from 'react';
+import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
+import { Context, server } from '../main';
+import { Button } from '../components/ui/button';
+import DarkModeToggle from './DarkModeToggle';
 
 const Header = () => {
   const { isAuthenticated, setIsAuthenticated, user } = useContext(Context);
   const navigate = useNavigate();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const logoutHandler = async () => {
     try {
@@ -35,28 +26,26 @@ const Header = () => {
   };
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" sx={{backgroundColor: "darkblue"}}>
-        <Toolbar>
-
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 900 }}>
-            NITJSR CP {isMobile ? '' : "Portal"}
-          </Typography>
-          <Button color="inherit" onClick={() => navigate('/')}>
-            Dashboard
-          </Button>
+    <header className="w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
+        <div onClick={()=>navigate('/')} className="font-extrabold text-lg cursor-pointer select-none">
+          NITJSR CP <span className="hidden sm:inline">Portal</span>
+        </div>
+        <nav className="flex items-center gap-2 ml-auto">
+          <Button variant="ghost" onClick={()=>navigate('/')}>Dashboard</Button>
           {isAuthenticated ? (
-            <Button color="inherit" onClick={logoutHandler}>Logout</Button>
+            <Button variant="outline" onClick={logoutHandler}>Logout</Button>
           ) : (
-            <Button color="inherit" onClick={() => {
-              navigate('/login');
-            }}>Login</Button>
+            <Button variant="outline" onClick={()=>navigate('/login')}>Login</Button>
           )}
-          {isAuthenticated && user?.image?.url?<Avatar alt="Profile Picture" src={user.image.url} variant="circular" sx={{"width":"30px", "height":"30px", "marginLeft":"10px"}}/>:null}
-        </Toolbar>
-      </AppBar>
-    </Box>
-  );
+          <DarkModeToggle />
+          {isAuthenticated && user?.image?.url ? (
+            <img src={user.image.url} alt="Profile" className="h-8 w-8 rounded-full border" />
+          ) : null}
+        </nav>
+      </div>
+    </header>
+  )
 };
 
 export default Header;

@@ -1,68 +1,24 @@
-import React, { useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useEffect, useState } from 'react';
-import { Context, server } from '../main';
+import { server } from '../main';
 import axios from 'axios';
-import { Box, Typography, Paper } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { styled } from '@mui/system';
 import ProtectedRoute from '../utils/ProtectedRoute';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableCaption } from '../components/ui/table';
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button';
 
-const Container = styled(Box)(({ theme }) => ({
-  backgroundColor: '#f5f5f5',
-  minHeight: '100vh',
-  padding: theme.spacing(3),
-}));
-
-const Header = styled(Typography)(({ theme }) => ({
-  textAlign: 'center',
-  marginBottom: theme.spacing(2),
-  color: '#333',
-}));
-
-const GridContainer = styled(Box)(({ theme }) => ({
-  marginX: '50px',
-  marginY: '10px',
-}));
-
-const GridBox = styled(Box)(({ theme }) => ({
-  gap: '8px',
-  flexGrow: 1,
-  padding: theme.spacing(3),
-  width: '70%',
-  margin: 'auto',
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  backgroundColor: '#fff',
-  borderRadius: '8px',
-  boxShadow: '0 3px 5px rgba(0,0,0,0.1)',
-}));
-
-const dataGridStyles = {
-  '& .MuiDataGrid-columnHeaders': {
-    backgroundColor: '#3f51b5',
-    color: '#00000',
-    fontSize: '16px',
-    fontWeight: '900',
-  },
-  '& .MuiDataGrid-row': {
-    backgroundColor: '#f5f5f5',
-  },
-  '& .MuiDataGrid-cell': {
-    fontSize: '14px',
-  },
+// Simple client-side sorting & filtering
+const sorters = {
+  rank: (a, b) => a.rank - b.rank,
+  name: (a, b) => a.name.localeCompare(b.name),
+  codeforcesRating: (a, b) => b.codeforcesRating - a.codeforcesRating,
 };
-
-const columns = [
-  { field: 'rank', headerName: 'Rank' },
-  { field: 'name', headerName: 'Name' },
-  { field: 'codeforces', headerName: 'Codeforces Id' },
-  { field: 'codeforcesRating', headerName: 'Rating' },
-];
 
 const Leaderboard = () => {
   const [leader, setLeader] = useState([]);
+  const [query, setQuery] = useState('');
+  const [sortKey, setSortKey] = useState('rank');
+  const [asc, setAsc] = useState(true);
 
   useEffect(() => {
     axios.get(`${server}/leaderboard`, {
@@ -81,32 +37,60 @@ const Leaderboard = () => {
       .catch((e) => {
         console.error(e);
         toast.error(e.response.data.message);
-      });
+       });
   }, []);
+
+  const filtered = leader.filter(l =>
+    !query || l.name.toLowerCase().includes(query.toLowerCase()) || l.codeforces?.toLowerCase().includes(query.toLowerCase())
+  );
+  const sorted = [...filtered].sort(sorters[sortKey]);
+  if (!asc) sorted.reverse();
+
+  const toggleSort = (key) => {
+    if (key === sortKey) setAsc(!asc); else { setSortKey(key); setAsc(true); }
+  };
 
   return (
     <ProtectedRoute>
-    <Container>
-      <Header variant="h4">
-        Leaderboard
-      </Header>
-      <GridContainer>
-        <GridBox>
-          <DataGrid
-            rows={leader}
-            columns={columns}
-            initialState={{
-              pagination: {
-                paginationModel: { page: 0, pageSize: 5 },
-              },
-            }}
-            pageSizeOptions={[5, 10, 20, 50, 100]}
-            getRowId={(row) => row._id}
-            sx={dataGridStyles}
-          />
-        </GridBox>
-      </GridContainer>
-    </Container>
+      <div className="min-h-screen bg-muted/20 py-10 px-4">
+        <div className="max-w-5xl mx-auto space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h1 className="text-2xl font-bold tracking-tight">Leaderboard</h1>
+            <div className="flex gap-2 items-center">
+              <Input placeholder="Search name or handle" value={query} onChange={e=>setQuery(e.target.value)} className="w-56" />
+              <Button variant="outline" onClick={()=>{setQuery('')}}>Reset</Button>
+            </div>
+          </div>
+          <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead onClick={()=>toggleSort('rank')} className="cursor-pointer select-none">Rank {sortKey==='rank' && (asc?'▲':'▼')}</TableHead>
+                  <TableHead onClick={()=>toggleSort('name')} className="cursor-pointer select-none">Name {sortKey==='name' && (asc?'▲':'▼')}</TableHead>
+                  <TableHead>Codeforces Id</TableHead>
+                  <TableHead onClick={()=>toggleSort('codeforcesRating')} className="cursor-pointer select-none">Rating {sortKey==='codeforcesRating' && (asc?'▲':'▼')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sorted.map(row => (
+                  <TableRow key={row._id} className="hover:bg-accent/40">
+                    <TableCell className="font-medium">{row.rank}</TableCell>
+                    <TableCell>{row.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{row.codeforces || '-'}</TableCell>
+                    <TableCell>{row.codeforcesRating}</TableCell>
+                  </TableRow>
+                ))}
+                {sorted.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-6">No results.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+              <TableCaption className="text-xs">Click headers to sort. {leader.length} competitors total.</TableCaption>
+            </Table>
+          </div>
+        </div>
+      </div>
     </ProtectedRoute>
   );
 };
