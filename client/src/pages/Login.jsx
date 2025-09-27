@@ -49,7 +49,7 @@ const Login = () => {
     }
   };
 
-  if (isAuthenticated) return <Navigate to={"/"} />;
+  if (isAuthenticated) return <Navigate to={"/dashboard"} replace />;
 
   return (
     <div className="flex min-h-[calc(100vh-56px)] items-center justify-center px-4 py-10 bg-gradient-to-br from-indigo-50 via-white to-slate-50">

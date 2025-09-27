@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Home from "./pages/Home";
+import Home from "./pages/Home"; // will serve as dashboard now
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Leaderboard from "./pages/Leaderboard";
@@ -29,7 +30,8 @@ function App() {
     <Router>
       <Header />
       <Routes>
-        <Route path="/" element={<Home />} />
+  <Route path="/" element={<Landing />} />
+  <Route path="/dashboard" element={<Home />} />
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/upcomingcontests" element={<UpcomingContests />} />
         <Route path="/login" element={<Login />} />
