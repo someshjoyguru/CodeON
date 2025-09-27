@@ -1,31 +1,13 @@
 import React, { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { Box } from "@mui/system";
-import { DataGrid } from "@mui/x-data-grid";
-import {
-  Avatar,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  Stack,
-  styled,
-  TextField,
-  Tooltip,
-  tooltipClasses,
-  Typography,
-} from "@mui/material";
-import ScheduleIcon from "@mui/icons-material/Schedule";
-import { Postcard, OneCard } from "../components/CommunityCards";
 import { Context, server } from "../main";
-import Loader from "../utils/Loader";
 import ProtectedRoute from "../utils/ProtectedRoute";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import RichTextEditor from "../components/ui/rich-text-editor";
+import { cn } from "../lib/utils";
+import { OneCard } from "../components/CommunityCards";
 
 const Community = () => {
   const [open, setOpen] = useState(false);
@@ -109,143 +91,94 @@ const Community = () => {
     setViewPost(null);
   };
 
-  const HtmlTooltip = styled(({ className, ...props }) => (
-    <Tooltip {...props} classes={{ popper: className }} />
-  ))(({ theme }) => ({
-    [`& .${tooltipClasses.tooltip}`]: {
-      backgroundColor: '#f5f5f9',
-      color: 'rgba(0, 0, 0, 0.87)',
-      maxWidth: 220,
-      fontSize: theme.typography.pxToRem(12),
-      border: '1px solid #dadde9',
-    },
-  }));
+  // Simple markdown help popover (inline)
+  const [showHelp, setShowHelp] = useState(false);
 
   return (
     <ProtectedRoute>
-      {loading ? (
-        <Loader />
-      ) : (
-      <Box>
-        <Box>
-          <Box
-            sx={{
-              gap: "8px",
-              flexGrow: 1,
-              padding: "30px",
-              width: "70%",
-              margin: "auto",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-            }}
-          >
-            <Button variant="contained" sx={{marginBottom:"20px"}} onClick={() => setOpen(true)}>
-              Create NEW Post
-            </Button>
-            {open && (
-              <Dialog open={open} sx={{justifyContent:"space-between"}} onClose={() => setOpen(false)}>
-                <DialogTitle>Create New Post
-                <Typography variant="caption"><HtmlTooltip
-        title={
-          <>
-            <Typography color="inherit">While writing your blog post:</Typography>
-            {<>
-            <li><em>{"Heading 2:"}</em> <code>{" ## This is a Heading 2"}</code></li>
-            <li><em>{"Heading 3:"}</em><code>{" ### This is a Heading 3"}</code>.{'\n'}</li>
-            <li><em>{"Bold Text:"}</em> <code>{" **This is bold text**"}</code>.{'\n'}</li>
-            <li><em>{"Underline Text:"}</em> <code>{" __This is underlined text__"}</code>.{'\n'}</li>
-            <li><em>{"List Items:"}</em> <code>{" * This is a list item"}</code>.{'\n'}</li>
-            <li><em>{"Blockquotes:"}</em> <code>{" > This is a blockquote"}</code>.{'\n'}</li>
-            <li><em>{"Paragraphs:"}</em> <code>{" This is a regular paragraph."}</code>{'\n'}</li>
-            <li><em>{"Newlines:"}</em> <code>{" Use '\\n' for newlines."}</code>.{'\n'}</li>
-            <li><em>{"Spaces and Tabs:"}</em> <code>{" Spaces and tabs within a line will be preserved."}</code>.</li>
-        </>}
-          </>
-        }
-      >
-        <Button>RULES</Button>
-      </HtmlTooltip>
-      </Typography>
-                </DialogTitle>
-                <DialogContent>
-                  <TextField
-                    margin="dense"
-                    label="Heading"
-                    type="text"
-                    fullWidth
-                    variant="outlined"
-                    value={heading}
-                    onChange={(e) => setHeading(e.target.value)}
-                  />
-                  <TextField
-                    margin="dense"
-                    label="Description"
-                    type="text"
-                    fullWidth
-                    variant="outlined"
-                    multiline
-                    rows={15}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button onClick={handleCreatePost} variant="contained">
-                    Post
-                  </Button>
-                </DialogActions>
-              </Dialog>
-            )}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">Community Posts</h1>
+          <Button onClick={()=>setOpen(true)} size="sm">New Post</Button>
+        </div>
 
-            <Box
-              sx={{
-                flexGrow: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Grid container spacing={4}>
-                {!viewPost &&
-                  posts.map((post) => (
-                    <Grid item xs={12} sm={12} md={12} key={post._id}>
-                      <Card>
-                        <CardContent>
-                          <Typography variant="h5" gutterBottom>
-                            {post.heading}
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary" paragraph>
-                            {post.summary}
-                          </Typography>
-                          <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2 }}>
-                            <ScheduleIcon color="action" />
-                            <Typography variant="body2" color="textSecondary">
-                              {new Date(post.createdAt).toLocaleString().split(",")[0]}
-                            </Typography>
-                          </Stack>
-                          <CardActions>
-                            <Button size="small" onClick={() => handleViewPost(post._id)}>
-                              Learn More
-                            </Button>
-                          </CardActions>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
-              </Grid>
-              {!open &&
-                viewPost &&
-                posts.map((post) =>
-                  post._id === viewPost ? <OneCard key={post._id} {...post} resetViewPost={resetViewPost} /> : null
-                )}
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-      )}
+        {open && (
+          <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-background/70 backdrop-blur p-2 sm:p-4">
+            <div className="w-full max-w-2xl rounded-xl border bg-card shadow-lg overflow-hidden animate-in fade-in zoom-in-95">
+              <div className="p-4 border-b flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Create New Post</h2>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={()=>setShowHelp(h=>!h)}>Rules</Button>
+                  <Button variant="ghost" size="sm" onClick={()=>setOpen(false)}>✕</Button>
+                </div>
+              </div>
+              {showHelp && (
+                <div className="px-4 py-2 text-[11px] border-b grid gap-1 bg-muted/40">
+                  <p className="font-medium mb-1">Formatting Shortcuts:</p>
+                  <ul className="grid grid-cols-2 gap-x-4 gap-y-1 list-disc pl-4">
+                    <li>## Heading 2</li>
+                    <li>### Heading 3</li>
+                    <li>**bold**</li>
+                    <li>__underline__</li>
+                    <li>* list item</li>
+                    <li>{'>'} quote</li>
+                    <li>``` code ```</li>
+                  </ul>
+                </div>
+              )}
+              <div className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium tracking-wide text-muted-foreground">Heading</label>
+                  <Input value={heading} onChange={e=>setHeading(e.target.value)} placeholder="Enter a concise title" />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium tracking-wide text-muted-foreground">Content</label>
+                  <RichTextEditor value={description} onChange={setDescription} placeholder="Write something insightful..." />
+                </div>
+              </div>
+              <div className="p-4 border-t flex justify-end gap-2 bg-muted/30">
+                <Button variant="outline" onClick={()=>setOpen(false)} disabled={loading}>Cancel</Button>
+                <Button onClick={handleCreatePost} disabled={loading || !heading || !description}>{loading? 'Posting...' : 'Post'}</Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="grid gap-4">
+          {!viewPost && posts.length === 0 && (
+            <div className="text-sm text-muted-foreground border rounded-lg p-8 text-center">No posts yet. Be the first to share!</div>
+          )}
+          {!viewPost && posts.length > 0 && (
+            <div className="grid gap-4">
+              {posts.map(post => (
+                <div key={post._id} className="rounded-lg border bg-card p-5 shadow-sm hover:shadow transition flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold leading-tight truncate">{post.heading}</h3>
+                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{post.summary}</p>
+                    <p className="text-[11px] mt-2 text-muted-foreground">{new Date(post.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button size="sm" variant="outline" onClick={()=>handleViewPost(post._id)}>Read More</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {viewPost && posts.map(post => post._id === viewPost ? (
+            <div key={post._id} className="rounded-lg border bg-card p-6 shadow-sm">
+              <div className="mb-4 flex justify-between items-start gap-4 flex-wrap">
+                <Button size="sm" variant="outline" onClick={resetViewPost}>Back</Button>
+                <p className="text-[11px] text-muted-foreground">Created {new Date(post.createdAt).toLocaleString()}</p>
+              </div>
+              <h2 className="text-2xl font-bold mb-4 leading-tight break-words">{post.heading}</h2>
+              <article className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+                {post.description}
+              </article>
+            </div>
+          ) : null)}
+        </div>
+      </div>
     </ProtectedRoute>
   );
 };
